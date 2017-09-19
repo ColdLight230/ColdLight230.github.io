@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="Android," />
 
 
 
@@ -84,12 +84,22 @@
 
 
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="XuLiang's home">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="ButterKnife 是 JakeWharton 大神出的一个编译时注解框架。在开发过程中，使用其注解可以极大的简化了我们代码。今天，我们就来研究一下大神的做法，并且了解编译时注解的原理。源码的版本是8.8.1 。
+使用方法不做具体演示，详情见这里这是使用时的具体代码：
+1234567891011121314151617181920public class MainActivity extend">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ButterKnife源码分析">
+<meta property="og:url" content="http://yoursite.com/2017/09/19/ButterKnife源码分析/index.html">
 <meta property="og:site_name" content="XuLiang's home">
+<meta property="og:description" content="ButterKnife 是 JakeWharton 大神出的一个编译时注解框架。在开发过程中，使用其注解可以极大的简化了我们代码。今天，我们就来研究一下大神的做法，并且了解编译时注解的原理。源码的版本是8.8.1 。
+使用方法不做具体演示，详情见这里这是使用时的具体代码：
+1234567891011121314151617181920public class MainActivity extend">
+<meta property="og:updated_time" content="2017-09-19T13:57:53.546Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="XuLiang's home">
+<meta name="twitter:title" content="ButterKnife源码分析">
+<meta name="twitter:description" content="ButterKnife 是 JakeWharton 大神出的一个编译时注解框架。在开发过程中，使用其注解可以极大的简化了我们代码。今天，我们就来研究一下大神的做法，并且了解编译时注解的原理。源码的版本是8.8.1 。
+使用方法不做具体演示，详情见这里这是使用时的具体代码：
+1234567891011121314151617181920public class MainActivity extend">
 
 
 
@@ -117,13 +127,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/09/19/ButterKnife源码分析/"/>
 
 
 
 
 
-  <title> XuLiang's home </title>
+  <title> ButterKnife源码分析 | XuLiang's home </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -144,9 +154,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left 
-   page-home 
- ">
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -237,9 +245,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -272,10 +280,7 @@
             
             
               
-                
-                <a class="post-title-link" href="/2017/09/19/ButterKnife源码分析/" itemprop="url">
-                  ButterKnife源码分析
-                </a>
+                ButterKnife源码分析
               
             
           </h1>
@@ -348,9 +353,7 @@
       
 
       
-        
-          
-            <p>ButterKnife 是 JakeWharton 大神出的一个编译时注解框架。在开发过程中，使用其注解可以极大的简化了我们代码。今天，我们就来研究一下大神的做法，并且了解编译时注解的原理。源码的版本是8.8.1 。</p>
+        <p>ButterKnife 是 JakeWharton 大神出的一个编译时注解框架。在开发过程中，使用其注解可以极大的简化了我们代码。今天，我们就来研究一下大神的做法，并且了解编译时注解的原理。源码的版本是8.8.1 。</p>
 <p>使用方法不做具体演示，<a href="https://github.com/JakeWharton/butterknife" target="_blank" rel="external">详情见这里</a><br>这是使用时的具体代码：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@BindView</span>(R.id.tv_title)</div><div class="line">    TextView mTvTitle;</div><div class="line">    <span class="meta">@BindView</span>(R.id.iv_logo)</div><div class="line">    ImageView mIvLogo;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        setContentView(R.layout.activity_main);</div><div class="line"></div><div class="line">        ButterKnife.bind(<span class="keyword">this</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@OnClick</span>(R.id.iv_logo)</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View view)</span> </span>&#123;</div><div class="line">        Toast.makeText(MainActivity.<span class="keyword">this</span>, <span class="string">"logo..."</span>, Toast.LENGTH_SHORT).show();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>编译一下，我们可以在 build -&gt; generated -&gt; source -&gt; apt -&gt; debug 里面看到自动生成了一个 MainActivity_ViewBinding.java 类。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line">public class MainActivity_ViewBinding implements Unbinder &#123;</div><div class="line">  private MainActivity target;</div><div class="line"></div><div class="line">  private View view2131427423;</div><div class="line"></div><div class="line">  @UiThread</div><div class="line">  public MainActivity_ViewBinding(MainActivity target) &#123;</div><div class="line">    this(target, target.getWindow().getDecorView());</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  @UiThread</div><div class="line">  public MainActivity_ViewBinding(final MainActivity target, View source) &#123;</div><div class="line">    this.target = target;</div><div class="line"></div><div class="line">    View view;</div><div class="line">    target.mTvTitle = Utils.findRequiredViewAsType(source, R.id.tv_title, &quot;field &apos;mTvTitle&apos;&quot;, TextView.class);</div><div class="line">    view = Utils.findRequiredView(source, R.id.iv_logo, &quot;field &apos;mIvLogo&apos; and method &apos;onClick&apos;&quot;);</div><div class="line">    target.mIvLogo = Utils.castView(view, R.id.iv_logo, &quot;field &apos;mIvLogo&apos;&quot;, ImageView.class);</div><div class="line">    view2131427423 = view;</div><div class="line">    view.setOnClickListener(new DebouncingOnClickListener() &#123;</div><div class="line">      @Override</div><div class="line">      public void doClick(View p0) &#123;</div><div class="line">        target.onClick(p0);</div><div class="line">      &#125;</div><div class="line">    &#125;);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  @Override</div><div class="line">  @CallSuper</div><div class="line">  public void unbind() &#123;</div><div class="line">    MainActivity target = this.target;</div><div class="line">    if (target == null) throw new IllegalStateException(&quot;Bindings already cleared.&quot;);</div><div class="line">    this.target = null;</div><div class="line"></div><div class="line">    target.mTvTitle = null;</div><div class="line">    target.mIvLogo = null;</div><div class="line"></div><div class="line">    view2131427423.setOnClickListener(null);</div><div class="line">    view2131427423 = null;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -361,215 +364,62 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> TypeSpec <span class="title">createType</span><span class="params">(<span class="keyword">int</span> sdk, <span class="keyword">boolean</span> debuggable)</span> </span>&#123;</div><div class="line">    TypeSpec.Builder result = TypeSpec.classBuilder(bindingClassName.simpleName())</div><div class="line">        .addModifiers(PUBLIC);</div><div class="line">    <span class="keyword">if</span> (isFinal) &#123;</div><div class="line">      result.addModifiers(FINAL);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (parentBinding != <span class="keyword">null</span>) &#123;</div><div class="line">      result.superclass(parentBinding.bindingClassName);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      result.addSuperinterface(UNBINDER);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (hasTargetField()) &#123;</div><div class="line">      result.addField(targetTypeName, <span class="string">"target"</span>, PRIVATE);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (isView) &#123;</div><div class="line">      result.addMethod(createBindingConstructorForView());</div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isActivity) &#123;</div><div class="line">      result.addMethod(createBindingConstructorForActivity());</div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isDialog) &#123;</div><div class="line">      result.addMethod(createBindingConstructorForDialog());</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (!constructorNeedsView()) &#123;</div><div class="line">      <span class="comment">// Add a delegating constructor with a target type + view signature for reflective use.</span></div><div class="line">      result.addMethod(createBindingViewDelegateConstructor());</div><div class="line">    &#125;</div><div class="line">    result.addMethod(createBindingConstructor(sdk, debuggable));</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (hasViewBindings() || parentBinding == <span class="keyword">null</span>) &#123;</div><div class="line">      result.addMethod(createBindingUnbindMethod(result));</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> result.build();</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
 <p>可以看到，在 <code>brewJava()</code> 方法中，就是根据我们的注解来构建出对应的 java 类的逻辑。这部分是 <a href="https://github.com/square/javapoet" target="_blank" rel="external">JavaPoet</a>  的用法，感兴趣可以去了解。<br>于是，在我们每次编译完，就可以看到  XXX_ViewBinding 文件了，ButterKnife 源码分析到此结束。</p>
 
-          
+      
+    </div>
+
+    <div>
+      
         
+
       
     </div>
 
     <div>
       
-    </div>
+        
 
-    <div>
       
     </div>
 
 
     <footer class="post-footer">
       
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/22/View的状态保存和恢复/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="XuLiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="XuLiang's home">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="XuLiang's home" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/01/22/View的状态保存和恢复/" itemprop="url">
-                  View的状态保存和恢复
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-22T22:05:43+08:00">
-                2017-01-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
+        <div class="post-tags">
           
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index">
-                    <span itemprop="name">Android</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
+            <a href="/tags/Android/" rel="tag"># Android</a>
           
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <blockquote>
-<p>在写自定义控件的时候发现一个问题，在控件中设置了变量来控制控件的状态，但是在屏幕旋转的时候，activity经历了销毁重启，此时自定义控件中的状态也随之重置了。</p>
-<p>为了保证在屏幕旋转的时候，控件的状态保持不变，可以通过重写<strong>View#onSaveInstanceState</strong>和<strong>View#onRestoreInstanceState</strong>来保证自定义控件的状态在重启的时候得到保留。</p>
-<p>通过这个小问题的解决，对View的保存和恢复状态有了一个了解。本篇文章只针对于View的保存和恢复。</p>
-</blockquote>
-<h2 id="一、保存状态流程"><a href="#一、保存状态流程" class="headerlink" title="一、保存状态流程"></a>一、保存状态流程</h2><h3 id="Activity-onSaveInstaceState"><a href="#Activity-onSaveInstaceState" class="headerlink" title="Activity#onSaveInstaceState"></a>Activity#onSaveInstaceState</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onSaveInstanceState</span><span class="params">(Bundle outState)</span> </span>&#123;</div><div class="line">	<span class="comment">//将view树的状态保存在bundle中</span></div><div class="line">	outState.putBundle(WINDOW_HIERARCHY_TAG, mWindow.saveHierarchyState());</div><div class="line">	Parcelable p = mFragments.saveAllState();</div><div class="line">		<span class="keyword">if</span> (p != <span class="keyword">null</span>) &#123;</div><div class="line">		outState.putParcelable(FRAGMENTS_TAG, p);</div><div class="line">	&#125;</div><div class="line">	getApplication().dispatchActivitySaveInstanceState(<span class="keyword">this</span>, outState);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>通过WINDOW_HIERARCHY_TAG这个key来保存view树的数据，这里Window的实现类是PhoneWindow.</p>
-<h3 id="PhoneWindow-saveHierarchyState"><a href="#PhoneWindow-saveHierarchyState" class="headerlink" title="PhoneWindow#saveHierarchyState"></a>PhoneWindow#saveHierarchyState</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> Bundle <span class="title">saveHierarchyState</span><span class="params">()</span> </span>&#123;</div><div class="line">	Bundle outState = <span class="keyword">new</span> Bundle();</div><div class="line">	<span class="keyword">if</span> (mContentParent == <span class="keyword">null</span>) &#123;</div><div class="line">		<span class="keyword">return</span> outState;</div><div class="line">	&#125;</div><div class="line">		</div><div class="line">	SparseArray&lt;Parcelable&gt; states = <span class="keyword">new</span> SparseArray&lt;Parcelable&gt;();</div><div class="line">	mContentParent.saveHierarchyState(states);</div><div class="line">	outState.putSparseParcelableArray(VIEWS_TAG, states);</div><div class="line">	<span class="comment">// save the focused view id</span></div><div class="line">	View focusedView = mContentParent.findFocus();</div><div class="line">	<span class="keyword">if</span> (focusedView != <span class="keyword">null</span>) &#123;</div><div class="line">		<span class="keyword">if</span> (focusedView.getId() != View.NO_ID) &#123;</div><div class="line">			outState.putInt(FOCUSED_ID_TAG, focusedView.getId());</div><div class="line">		&#125; <span class="keyword">else</span> &#123;</div><div class="line">			<span class="keyword">if</span> (<span class="keyword">false</span>) &#123;</div><div class="line">				Log.d(TAG, <span class="string">"couldn't save which view has focus because the focused view "</span></div><div class="line">						+ focusedView + <span class="string">" has no id."</span>);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="comment">// save the panels</span></div><div class="line">	SparseArray&lt;Parcelable&gt; panelStates = <span class="keyword">new</span> SparseArray&lt;Parcelable&gt;();</div><div class="line">	savePanelState(panelStates);</div><div class="line">	<span class="keyword">if</span> (panelStates.size() &gt; <span class="number">0</span>) &#123;</div><div class="line">		outState.putSparseParcelableArray(PANELS_TAG, panelStates);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">if</span> (mDecorContentParent != <span class="keyword">null</span>) &#123;</div><div class="line">		SparseArray&lt;Parcelable&gt; actionBarStates = <span class="keyword">new</span> SparseArray&lt;Parcelable&gt;();</div><div class="line">		mDecorContentParent.saveToolbarHierarchyState(actionBarStates);</div><div class="line">		outState.putSparseParcelableArray(ACTION_BAR_TAG, actionBarStates);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> outState;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里的SparseArray类似HashMap，接着调用了mContentParent的saveHierarchyState()方法，并把结果放进outState中并返回。这里的mContentParent是DecorView的子元素或者其自身，这里可以把mContentParent看做整个View树的顶层视图，由于mContentParent是一个ViewGroup，但是ViewGroup没有重写saveHierarchyState方法,那么这里调用的便是</p>
-<h3 id="ViewGroup-saveHierarchyState"><a href="#ViewGroup-saveHierarchyState" class="headerlink" title="ViewGroup#saveHierarchyState:"></a>ViewGroup#saveHierarchyState:</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">saveHierarchyState</span><span class="params">(SparseArray&lt;Parcelable&gt; container)</span> </span>&#123;</div><div class="line">	dispatchSaveInstanceState(container);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>分发到 各个子view，去保存各个子view的数据</p>
-<h3 id="View-saveHierarchyState"><a href="#View-saveHierarchyState" class="headerlink" title="View#saveHierarchyState:"></a>View#saveHierarchyState:</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">dispatchSaveInstanceState</span><span class="params">(SparseArray&lt;Parcelable&gt; container)</span> </span>&#123;</div><div class="line">	<span class="keyword">if</span> (mID != NO_ID &amp;&amp; (mViewFlags &amp; SAVE_DISABLED_MASK) == <span class="number">0</span>) &#123;</div><div class="line">		mPrivateFlags &amp;= ~PFLAG_SAVE_STATE_CALLED;</div><div class="line">		Parcelable state = onSaveInstanceState();</div><div class="line">		<span class="keyword">if</span> ((mPrivateFlags &amp; PFLAG_SAVE_STATE_CALLED) == <span class="number">0</span>) &#123;</div><div class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</div><div class="line">					<span class="string">"Derived class did not call      super.onSaveInstanceState()"</span>);</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">if</span> (state != <span class="keyword">null</span>) &#123;</div><div class="line">			<span class="comment">// Log.i("View", "Freezing #" + Integer.toHexString(mID)</span></div><div class="line">			<span class="comment">// + ": " + state);</span></div><div class="line">			container.put(mID, state);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里首先判断当前View是不是有一个ID以及saveEnable属性，接着下面便调用到了View#onSaveInstanceState()方法，也即我们的自定义View需要重写的方法，这个方法返回Parcelable对象，即可序列化对象，最后把该Parcelable对象放进了SparseArray内，key是该View的id。</p>
-<blockquote>
-<p>由此可知，如果一个View需要保存状态，那么至少需要以下两个条件：</p>
-<ol>
-<li>必须给view设置一个id</li>
-<li>view的saveEnable属性必须是true</li>
-</ol>
-</blockquote>
-<h2 id="二、恢复状态流程"><a href="#二、恢复状态流程" class="headerlink" title="二、恢复状态流程"></a>二、恢复状态流程</h2><h3 id="Activity-onRestoreInstanceState"><a href="#Activity-onRestoreInstanceState" class="headerlink" title="Activity#onRestoreInstanceState"></a>Activity#onRestoreInstanceState</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onRestoreInstanceState</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">	<span class="keyword">if</span> (mWindow != <span class="keyword">null</span>) &#123;</div><div class="line">		Bundle windowState = savedInstanceState.getBundle(WINDOW_HIERARCHY_TAG);</div><div class="line">		<span class="keyword">if</span> (windowState != <span class="keyword">null</span>) &#123;</div><div class="line">			mWindow.restoreHierarchyState(windowState);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>先是根据WINDOW_HIERARCHY_TAG这个key获取Bundle对应的数据，即View树数据，接着调用mWindow.restoreHierarchyState方法，我们继续看</p>
-<h3 id="PhoneWindow-restoreHierarchyState："><a href="#PhoneWindow-restoreHierarchyState：" class="headerlink" title="PhoneWindow#restoreHierarchyState："></a>PhoneWindow#restoreHierarchyState：</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">restoreHierarchyState</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">	SparseArray&lt;Parcelable&gt; savedStates</div><div class="line">			= savedInstanceState.getSparseParcelableArray(VIEWS_TAG);</div><div class="line">	<span class="keyword">if</span> (savedStates != <span class="keyword">null</span>) &#123;</div><div class="line">		mContentParent.restoreHierarchyState(savedStates);</div><div class="line">	&#125;</div><div class="line">	<span class="comment">//省略...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>从Bundle里面根据VIEWS_TAG来获取SparseArray，这个之前我们也说过了，这就是View树数据所对应的SparseArray，接着调用mContentParent.restoreHierarchyState，到这里我们也知道接下来应该是调用<strong>View#restoreHierarchyState</strong>方法，而就如保存状态一样，恢复状态也需要把事件分发给ViewGroup的所有子View，所以在restoreHierarchyState方法里面又调用到了 </p>
-<h3 id="ViewGroup-dispatchRestoreInstanceState"><a href="#ViewGroup-dispatchRestoreInstanceState" class="headerlink" title="ViewGroup#dispatchRestoreInstanceState:"></a>ViewGroup#dispatchRestoreInstanceState:</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">dispatchRestoreInstanceState</span><span class="params">(SparseArray&lt;Parcelable&gt; container)</span> </span>&#123;</div><div class="line">	<span class="comment">//调用View的dispatchRestoreInstanceState，目的是恢复ViewGroup自身的状态</span></div><div class="line">	<span class="keyword">super</span>.dispatchRestoreInstanceState(container);</div><div class="line">	<span class="keyword">final</span> <span class="keyword">int</span> count = mChildrenCount;</div><div class="line">	<span class="keyword">final</span> View[] children = mChildren;</div><div class="line">	<span class="comment">//遍历所有子View，逐个恢复它们的状态</span></div><div class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</div><div class="line">		View c = children[i];</div><div class="line">		<span class="keyword">if</span> ((c.mViewFlags &amp; PARENT_SAVE_DISABLED_MASK) != PARENT_SAVE_DISABLED) &#123;</div><div class="line">			c.dispatchRestoreInstanceState(container);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>可以看出，代码和dispatchOnSaveInstanceState方法基本类似，接着我们看 </p>
-<h3 id="View-dispatchRestoreInstanceState"><a href="#View-dispatchRestoreInstanceState" class="headerlink" title="View#dispatchRestoreInstanceState:"></a>View#dispatchRestoreInstanceState:</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">dispatchRestoreInstanceState</span><span class="params">(SparseArray&lt;Parcelable&gt; container)</span> </span>&#123;</div><div class="line">	<span class="keyword">if</span> (mID != NO_ID) &#123;</div><div class="line">		Parcelable state = container.get(mID);</div><div class="line">		<span class="keyword">if</span> (state != <span class="keyword">null</span>) &#123;</div><div class="line">			mPrivateFlags &amp;= ~PFLAG_SAVE_STATE_CALLED;</div><div class="line">			onRestoreInstanceState(state);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里根据View的Id在SparseArray中获得对应的Parcelable对象，即视图数据，接着调用了<strong>View#onRestoreInstanceState(Parcelable)</strong>方法，交给每一个View来自行恢复数据，至此，View树的数据恢复解析完毕。</p>
-<blockquote>
-<p>一般对于自定义View来说，我们会重写<strong>onSaveInstanceState()</strong>和<strong>onRestoreInstanceState(Parcelable)</strong>方法，来处理我们需要恢复的数据。</p>
-</blockquote>
-<h2 id="参考文章："><a href="#参考文章：" class="headerlink" title="参考文章："></a>参考文章：</h2><blockquote>
-<ol>
-<li><a href="http://www.jianshu.com/p/4c1a6d382a85" target="_blank" rel="external">Android 视图树&amp;View状态保存</a></li>
-<li><a href="http://blog.csdn.net/hp910315/article/details/51890813" target="_blank" rel="external">Android View状态保存 </a></li>
-<li><a href="http://www.jianshu.com/p/58579627f70a" target="_blank" rel="external">Android状态保存与恢复流程 完全解析</a></li>
-</ol>
-</blockquote>
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/22/View的状态保存和恢复/" rel="next" title="View的状态保存和恢复">
+                <i class="fa fa-chevron-left"></i> View的状态保存和恢复
+              </a>
+            
+          </div>
 
-          
-        
-      
-    </div>
+          <span class="post-nav-divider"></span>
 
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
       
 
       
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
           
           </div>
@@ -577,6 +427,10 @@
 
 
           
+  <div class="comments" id="comments">
+    
+  </div>
+
 
         </div>
         
@@ -752,6 +606,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
 
   
 
@@ -783,6 +641,10 @@
 
   
 
+  
+      <!-- UY BEGIN -->
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid="></script>
+      <!-- UY END -->
   
 
 
