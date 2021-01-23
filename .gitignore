@@ -5,3 +5,4 @@ public/
 db.json
 .vscode/
 package-lock.json
+*.log
