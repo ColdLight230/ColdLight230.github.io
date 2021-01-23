@@ -1,0 +1,7 @@
+_site
+.sass-cache
+public/
+.deploy_git/
+db.json
+.vscode/
+package-lock.json
