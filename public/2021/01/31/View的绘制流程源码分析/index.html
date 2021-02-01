@@ -1,0 +1,737 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Android,源码分析," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1. Activity启动后从哪里开始开启View的绘制在ActivityThread中，当Activity被创建完成后，然后通过ASM会调用到ActivityThread#handleResumeActivity方法，在这个方法内，会通过WindowManager的addView方法将DecorView添加到window中，具体实现在WindowManagerImpl中
+12345@Overri">
+<meta property="og:type" content="article">
+<meta property="og:title" content="View的绘制流程源码分析">
+<meta property="og:url" content="http://yoursite.com/2021/01/31/View的绘制流程源码分析/index.html">
+<meta property="og:site_name" content="XuLiang's home">
+<meta property="og:description" content="1. Activity启动后从哪里开始开启View的绘制在ActivityThread中，当Activity被创建完成后，然后通过ASM会调用到ActivityThread#handleResumeActivity方法，在这个方法内，会通过WindowManager的addView方法将DecorView添加到window中，具体实现在WindowManagerImpl中
+12345@Overri">
+<meta property="og:updated_time" content="2021-02-01T07:07:47.256Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="View的绘制流程源码分析">
+<meta name="twitter:description" content="1. Activity启动后从哪里开始开启View的绘制在ActivityThread中，当Activity被创建完成后，然后通过ASM会调用到ActivityThread#handleResumeActivity方法，在这个方法内，会通过WindowManager的addView方法将DecorView添加到window中，具体实现在WindowManagerImpl中
+12345@Overri">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/31/View的绘制流程源码分析/"/>
+
+
+
+
+
+  <title> View的绘制流程源码分析 | XuLiang's home </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">XuLiang's home</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle"></p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/31/View的绘制流程源码分析/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="XuLiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="XuLiang's home">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="XuLiang's home" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                View的绘制流程源码分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2021-01-31T00:00:00+08:00">
+                2021-01-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="1-Activity启动后从哪里开始开启View的绘制"><a href="#1-Activity启动后从哪里开始开启View的绘制" class="headerlink" title="1. Activity启动后从哪里开始开启View的绘制"></a>1. Activity启动后从哪里开始开启View的绘制</h3><p>在ActivityThread中，当Activity被创建完成后，然后通过ASM会调用到<code>ActivityThread#handleResumeActivity</code>方法，在这个方法内，会通过WindowManager的addView方法将DecorView添加到window中，具体实现在WindowManagerImpl中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addView</span><span class="params">(@NonNull View view, @NonNull ViewGroup.LayoutParams params)</span> </span>&#123;</div><div class="line">    applyDefaultToken(params);</div><div class="line">    mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里的<code>mGlobal</code>是<code>WindowManagerGlobal</code>单例对象，在<code>WindowManagerGlobal</code>的addView方法中，主要是创建了<code>ViewRootImpl</code>,并将<code>ViewRootImpl</code>和<code>DecorView</code>建立关联。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">root = <span class="keyword">new</span> ViewRootImpl(view.getContext(), display);</div><div class="line"><span class="keyword">try</span> &#123;</div><div class="line">    root.setView(view, wparams, panelParentView);</div><div class="line">&#125; <span class="keyword">catch</span> (RuntimeException e) &#123;</div><div class="line">    <span class="comment">// ...</span></div><div class="line">    <span class="keyword">throw</span> e;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<p><code>ViewRootImpl</code>可以看做是WindowManager和DecorView的纽带，WindowManager对View的控制就是通过ViewRootImpl来实现的，View的measure、layout、draw流程就是通过ViewRootImpl来完成的。</p>
+<p>具体流程就是从<code>ViewRootImpl</code>的<code>setView</code>方法开始，调用到<code>requestLayout()</code>方法，再到<code>scheduleTraversals()</code>中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">TraversalRunnable</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">  	<span class="meta">@Override</span></div><div class="line">  	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">    	doTraversal();</div><div class="line">  	&#125;</div><div class="line">&#125;</div><div class="line"><span class="keyword">final</span> TraversalRunnable mTraversalRunnable = <span class="keyword">new</span> TraversalRunnable();</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">scheduleTraversals</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">if</span> (!mTraversalScheduled) &#123;</div><div class="line">        mTraversalScheduled = <span class="keyword">true</span>;</div><div class="line">        mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();</div><div class="line">        <span class="comment">// 1-1 mTraversalRunnable是一个Runnable，通过postCallback触发</span></div><div class="line">        mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, <span class="keyword">null</span>);</div><div class="line">        <span class="keyword">if</span> (!mUnbufferedInputDispatch) &#123;</div><div class="line">        		scheduleConsumeBatchedInput();</div><div class="line">        &#125;</div><div class="line">        notifyRendererOfFramePending();</div><div class="line">        pokeDrawLockIfNeeded();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">doTraversal</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">if</span> (mTraversalScheduled) &#123;</div><div class="line">        mTraversalScheduled = <span class="keyword">false</span>;</div><div class="line">        mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (mProfile) &#123;</div><div class="line">            Debug.startMethodTracing(<span class="string">"ViewAncestor"</span>);</div><div class="line">        &#125;</div><div class="line">				<span class="comment">// 1-2 开始绘制View的地方</span></div><div class="line">        performTraversals();</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (mProfile) &#123;</div><div class="line">            Debug.stopMethodTracing();</div><div class="line">            mProfile = <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后在<code>scheduleTraversals()</code>中 1-1 代码处通过<code>Choreographer</code>的postCallback触发<code>TraversalRunnable</code>，接着执行<code>doTraversal()</code>，在<code>doTraversal()</code>中，会执行到 1-2 的<code>performTraversals()</code>，这里就是View开始执行绘制过程的地方。</p>
+<h3 id="2-performTraversals流程"><a href="#2-performTraversals流程" class="headerlink" title="2. performTraversals流程"></a>2. performTraversals流程</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">performTraversals</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="comment">// ... </span></div><div class="line">    </div><div class="line">    <span class="keyword">if</span> (mFirst || windowShouldResize || insetsChanged ||</div><div class="line">            viewVisibilityChanged || params != <span class="keyword">null</span> || mForceNextWindowRelayout) &#123;</div><div class="line">        <span class="comment">// ...</span></div><div class="line">        <span class="keyword">if</span> (!mStopped || mReportNextDraw) &#123;</div><div class="line">            <span class="keyword">boolean</span> focusChangedDueToTouchMode = ensureTouchModeLocally(</div><div class="line">                    (relayoutResult&amp;WindowManagerGlobal.RELAYOUT_RES_IN_TOUCH_MODE) != <span class="number">0</span>);</div><div class="line">            <span class="keyword">if</span> (focusChangedDueToTouchMode || mWidth != host.getMeasuredWidth()</div><div class="line">                    || mHeight != host.getMeasuredHeight() || contentInsetsChanged ||</div><div class="line">                    updatedConfiguration) &#123;</div><div class="line">                <span class="comment">// 2-1 开始measure流程</span></div><div class="line">                <span class="comment">// Ask host how big it wants to be</span></div><div class="line">                performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</div><div class="line"></div><div class="line">                </div><div class="line">                <span class="keyword">if</span> (measureAgain) &#123;</div><div class="line">                    <span class="keyword">if</span> (DEBUG_LAYOUT) Log.v(mTag,</div><div class="line">                            <span class="string">"And hey let's measure once more: width="</span> + width</div><div class="line">                            + <span class="string">" height="</span> + height);</div><div class="line">                    performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</div><div class="line">                &#125;</div><div class="line">                layoutRequested = <span class="keyword">true</span>;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        maybeHandleWindowMove(frame);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">final</span> <span class="keyword">boolean</span> didLayout = layoutRequested &amp;&amp; (!mStopped || mReportNextDraw);</div><div class="line">    <span class="keyword">boolean</span> triggerGlobalLayoutListener = didLayout</div><div class="line">            || mAttachInfo.mRecomputeGlobalAttributes;</div><div class="line">    <span class="keyword">if</span> (didLayout) &#123;</div><div class="line">        <span class="comment">// 2-2 开始layout流程</span></div><div class="line">        performLayout(lp, mWidth, mHeight);</div><div class="line">        <span class="comment">// ...</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// ... </span></div><div class="line">    <span class="keyword">if</span> (!cancelDraw &amp;&amp; !newSurface) &#123;</div><div class="line">        <span class="keyword">if</span> (mPendingTransitions != <span class="keyword">null</span> &amp;&amp; mPendingTransitions.size() &gt; <span class="number">0</span>) &#123;</div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mPendingTransitions.size(); ++i) &#123;</div><div class="line">                mPendingTransitions.get(i).startChangingAnimations();</div><div class="line">            &#125;</div><div class="line">            mPendingTransitions.clear();</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 2-3 开始draw流程</span></div><div class="line">        performDraw();</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">if</span> (isViewVisible) &#123;</div><div class="line">            <span class="comment">// Try again</span></div><div class="line">            scheduleTraversals();</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (mPendingTransitions != <span class="keyword">null</span> &amp;&amp; mPendingTransitions.size() &gt; <span class="number">0</span>) &#123;</div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mPendingTransitions.size(); ++i) &#123;</div><div class="line">                mPendingTransitions.get(i).endChangingAnimations();</div><div class="line">            &#125;</div><div class="line">            mPendingTransitions.clear();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    mIsInTraversal = <span class="keyword">false</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>performTraversals()</code>方法比较长，我们简化一下，可以看到，在2-1，2-2，2-3处分别是<code>performMeasure</code>、<code>performLayout</code>、<code>performDraw</code>，也就是对应着View绘制的三大流程：测量、布局、绘制。在<code>performMeasure</code>会调用<code>view.measure(int widthMeasureSpec, int heightMeasureSpec)</code>方法来触发view的测量， 然后在<code>performLayout</code>中会调用view.layout(int l, int t, int r, int b)来布局，<code>performDraw</code>的传递过程是在draw方法中通过dispatchDraw来实现的。</p>
+<p>我们接着到View中一步一步看measure、layout、draw流程。</p>
+<h3 id="3-测量过程-View-measure-gt-onMeasure"><a href="#3-测量过程-View-measure-gt-onMeasure" class="headerlink" title="3.  测量过程 View#measure -&gt; onMeasure"></a>3.  测量过程 View#measure -&gt; onMeasure</h3><h4 id="3-1-MeasureSpec测量模式"><a href="#3-1-MeasureSpec测量模式" class="headerlink" title="3.1 MeasureSpec测量模式"></a>3.1 MeasureSpec测量模式</h4><p>View的measure方法接收的是两个32位int类型的参数，这个32位int类型的参数包含两部分，一部分是高2位，代表着测量模式。另一部分则是低30位，存储着size信息，这个就是View的MeasureSpec信息。</p>
+<p>对于顶级View（DecorView）来说，它的MeasureSpec是由窗口的尺寸和自身的LayoutParams共同确定的。具体逻辑如下代码所示</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// ViewRootImpl中的measureHierarchy方法内 确定DecorView的MeasureSpec</span></div><div class="line">childWidthMeasureSpec = getRootMeasureSpec(desiredWindowWidth, lp.width);</div><div class="line">childHeightMeasureSpec = getRootMeasureSpec(desiredWindowHeight, lp.height);</div><div class="line">performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);</div><div class="line"></div><div class="line"><span class="comment">// 获取DecorView的MeasureSpec的具体实现</span></div><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getRootMeasureSpec</span><span class="params">(<span class="keyword">int</span> windowSize, <span class="keyword">int</span> rootDimension)</span> </span>&#123;</div><div class="line">    <span class="keyword">int</span> measureSpec;</div><div class="line">    <span class="keyword">switch</span> (rootDimension) &#123;</div><div class="line">        <span class="keyword">case</span> ViewGroup.LayoutParams.MATCH_PARENT:</div><div class="line">            <span class="comment">// Window can't resize. Force root view to be windowSize.</span></div><div class="line">            measureSpec = MeasureSpec.makeMeasureSpec(windowSize, MeasureSpec.EXACTLY);</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> ViewGroup.LayoutParams.WRAP_CONTENT:</div><div class="line">            <span class="comment">// Window can resize. Set max size for root view.</span></div><div class="line">            measureSpec = MeasureSpec.makeMeasureSpec(windowSize, MeasureSpec.AT_MOST);</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="comment">// Window wants to be an exact size. Force root view to be that size.</span></div><div class="line">            measureSpec = MeasureSpec.makeMeasureSpec(rootDimension, MeasureSpec.EXACTLY);</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> measureSpec;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>所以，对于DecorView来说，它的MeasureSpec规则就是通过它自身LayoutParams来划分：</p>
+<blockquote>
+<ol>
+<li>LayoutParams.MATCH_PARENT : MeasureSpec.EXACTLY，大小就是窗口的size</li>
+<li>LayoutParams.WRAP_CONTENT :  MeasureSpec.AT_MOST，大小不确定，但最大不能超过窗口size</li>
+<li>固定大小（如200dp）: MeasureSpec.EXACTLY，大小为LayoutParams指定的值</li>
+</ol>
+</blockquote>
+<h4 id="3-2-MeasureSpec和LayoutParams的配合过程"><a href="#3-2-MeasureSpec和LayoutParams的配合过程" class="headerlink" title="3.2 MeasureSpec和LayoutParams的配合过程"></a>3.2 MeasureSpec和LayoutParams的配合过程</h4><p>对于普通View来说，MeasureSpec是ViewGroup从<code>measureChildWithMargins</code>方法中传递下来的，具体生成的规则我们可以看<code>getChildMeasureSpec</code>方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getChildMeasureSpec</span><span class="params">(<span class="keyword">int</span> spec, <span class="keyword">int</span> padding, <span class="keyword">int</span> childDimension)</span> </span>&#123;</div><div class="line">  	<span class="comment">// 通过spec获取到测量模式和size</span></div><div class="line">    <span class="keyword">int</span> specMode = MeasureSpec.getMode(spec);</div><div class="line">    <span class="keyword">int</span> specSize = MeasureSpec.getSize(spec);</div><div class="line">		<span class="comment">// 需要减去父布局的padding</span></div><div class="line">    <span class="keyword">int</span> size = Math.max(<span class="number">0</span>, specSize - padding);</div><div class="line"></div><div class="line">    <span class="keyword">int</span> resultSize = <span class="number">0</span>;</div><div class="line">    <span class="keyword">int</span> resultMode = <span class="number">0</span>;</div><div class="line"></div><div class="line">    <span class="keyword">switch</span> (specMode) &#123;</div><div class="line">    <span class="comment">// 父布局规定了固定的尺寸</span></div><div class="line">    <span class="keyword">case</span> MeasureSpec.EXACTLY:</div><div class="line">        <span class="keyword">if</span> (childDimension &gt;= <span class="number">0</span>) &#123;</div><div class="line">          	<span class="comment">// 子控件LayoutParams设置了固定大小，那么对应的测量模式为EXACTLY，大小为子控件LayoutParams的大小</span></div><div class="line">            resultSize = childDimension;</div><div class="line">            resultMode = MeasureSpec.EXACTLY;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.MATCH_PARENT) &#123;</div><div class="line">          	<span class="comment">// 子控件LayoutParams为MATCH_PARENT，那么对应的测量模式为EXACTLY，大小为父控件传递下来的大小</span></div><div class="line">            resultSize = size;</div><div class="line">            resultMode = MeasureSpec.EXACTLY;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.WRAP_CONTENT) &#123;</div><div class="line">          	<span class="comment">// 子控件LayoutParams为WRAP_CONTENT，那么对应的测量模式为AT_MOST，大小不能超过父控件传递下来的大小</span></div><div class="line">            resultSize = size;</div><div class="line">            resultMode = MeasureSpec.AT_MOST;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">break</span>;</div><div class="line"></div><div class="line">    <span class="comment">// 父布局规定了最大尺寸</span></div><div class="line">    <span class="keyword">case</span> MeasureSpec.AT_MOST:</div><div class="line">        <span class="keyword">if</span> (childDimension &gt;= <span class="number">0</span>) &#123;</div><div class="line">          	<span class="comment">// 子控件LayoutParams设置了固定大小，那么对应的测量模式为EXACTLY，大小为子控件LayoutParams的大小</span></div><div class="line">            resultSize = childDimension;</div><div class="line">            resultMode = MeasureSpec.EXACTLY;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.MATCH_PARENT) &#123;</div><div class="line">           	<span class="comment">// 子控件LayoutParams为MATCH_PARENT，那么对应的测量模式为AT_MOST，大小为父控件传递下来的大小</span></div><div class="line">            resultSize = size;</div><div class="line">            resultMode = MeasureSpec.AT_MOST;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.WRAP_CONTENT) &#123;</div><div class="line">          	<span class="comment">// 子控件LayoutParams为WRAP_CONTENT，那么对应的测量模式为AT_MOST，大小不能超过父控件传递下来的大小</span></div><div class="line">            resultSize = size;</div><div class="line">            resultMode = MeasureSpec.AT_MOST;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">break</span>;</div><div class="line"></div><div class="line">    <span class="comment">// 父布局没规定尺寸，看子布局要展示多大</span></div><div class="line">    <span class="keyword">case</span> MeasureSpec.UNSPECIFIED:</div><div class="line">        <span class="keyword">if</span> (childDimension &gt;= <span class="number">0</span>) &#123;</div><div class="line">          	<span class="comment">// 子控件LayoutParams设置了固定大小，那么对应的测量模式为EXACTLY，大小为子控件LayoutParams的大小</span></div><div class="line">            resultSize = childDimension;</div><div class="line">            resultMode = MeasureSpec.EXACTLY;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.MATCH_PARENT) &#123;</div><div class="line">           	<span class="comment">// 子控件LayoutParams为MATCH_PARENT，那么对应的测量模式为UNSPECIFIED，大小为0</span></div><div class="line">            resultSize = View.sUseZeroUnspecifiedMeasureSpec ? <span class="number">0</span> : size;</div><div class="line">            resultMode = MeasureSpec.UNSPECIFIED;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (childDimension == LayoutParams.WRAP_CONTENT) &#123;</div><div class="line">           	<span class="comment">// 子控件LayoutParams为WRAP_CONTENT，那么对应的测量模式为UNSPECIFIED，大小为0</span></div><div class="line">            resultSize = View.sUseZeroUnspecifiedMeasureSpec ? <span class="number">0</span> : size;</div><div class="line">            resultMode = MeasureSpec.UNSPECIFIED;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">//noinspection ResourceType</span></div><div class="line">    <span class="keyword">return</span> MeasureSpec.makeMeasureSpec(resultSize, resultMode);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从以上代码可以清晰的看到获取子控件测量模式的规则，子控件的测量模式需要父控件的测量模式、父控件的size以及子控件自身设置的LayoutParams共同来决定。</p>
+<h4 id="3-3-View的具体测量过程"><a href="#3-3-View的具体测量过程" class="headerlink" title="3.3 View的具体测量过程"></a>3.3 View的具体测量过程</h4><p>了解了测量模式以及其生成规则后，我们继续到View中看具体的测量过程，<code>measure()</code>方法是一个被final修饰的方法，不能被子类覆写，然后在<code>measure()</code>中调用了<code>onMeasure</code>方法，我们来看看<code>onMeasure</code>方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onMeasure</span><span class="params">(<span class="keyword">int</span> widthMeasureSpec, <span class="keyword">int</span> heightMeasureSpec)</span> </span>&#123;</div><div class="line">  	<span class="comment">// 3-1 设置View的大小</span></div><div class="line">    setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),</div><div class="line">            getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>getDefaultSize和getSuggestedMinimumWidth方法具体就不细看，主要是通过MeasureSpec和View的一些其他限制规则(如设置了最小宽度之类的)获取到一个真正的size，然后通过setMeasuredDimension方法设置。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">setMeasuredDimension</span><span class="params">(<span class="keyword">int</span> measuredWidth, <span class="keyword">int</span> measuredHeight)</span> </span>&#123;</div><div class="line">    <span class="keyword">boolean</span> optical = isLayoutModeOptical(<span class="keyword">this</span>);</div><div class="line">    <span class="keyword">if</span> (optical != isLayoutModeOptical(mParent)) &#123;</div><div class="line">        Insets insets = getOpticalInsets();</div><div class="line">        <span class="keyword">int</span> opticalWidth  = insets.left + insets.right;</div><div class="line">        <span class="keyword">int</span> opticalHeight = insets.top  + insets.bottom;</div><div class="line"></div><div class="line">        measuredWidth  += optical ? opticalWidth  : -opticalWidth;</div><div class="line">        measuredHeight += optical ? opticalHeight : -opticalHeight;</div><div class="line">    &#125;</div><div class="line">    setMeasuredDimensionRaw(measuredWidth, measuredHeight);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setMeasuredDimensionRaw</span><span class="params">(<span class="keyword">int</span> measuredWidth, <span class="keyword">int</span> measuredHeight)</span> </span>&#123;</div><div class="line">    mMeasuredWidth = measuredWidth;</div><div class="line">    mMeasuredHeight = measuredHeight;</div><div class="line"></div><div class="line">    mPrivateFlags |= PFLAG_MEASURED_DIMENSION_SET;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最终将值设置到 <code>mMeasuredWidth</code>、 <code>mMeasuredHeight</code>上，通过这一系列的测量过程，就最终确定下来了该View的大小。这也是我们通过<code>View#getMeasuredWidth()</code>和<code>View#getMeasuredHeight()</code>一定要在onMeasure之后才能获取到正确值的原因。</p>
+<h3 id="4-布局流程-View-layout-gt-onLayout"><a href="#4-布局流程-View-layout-gt-onLayout" class="headerlink" title="4.  布局流程 View#layout -&gt; onLayout"></a>4.  布局流程 View#layout -&gt; onLayout</h3><p>layout过程相比measure过程来说是简单一些，主要作用就是确定子View的位置。</p>
+<h4 id="4-1-通过setFrame来设定View四个顶点的位置"><a href="#4-1-通过setFrame来设定View四个顶点的位置" class="headerlink" title="4.1 通过setFrame来设定View四个顶点的位置"></a>4.1 通过setFrame来设定View四个顶点的位置</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">layout</span><span class="params">(<span class="keyword">int</span> l, <span class="keyword">int</span> t, <span class="keyword">int</span> r, <span class="keyword">int</span> b)</span> </span>&#123;</div><div class="line">    <span class="keyword">if</span> ((mPrivateFlags3 &amp; PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT) != <span class="number">0</span>) &#123;</div><div class="line">        onMeasure(mOldWidthMeasureSpec, mOldHeightMeasureSpec);</div><div class="line">        mPrivateFlags3 &amp;= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">int</span> oldL = mLeft;</div><div class="line">    <span class="keyword">int</span> oldT = mTop;</div><div class="line">    <span class="keyword">int</span> oldB = mBottom;</div><div class="line">    <span class="keyword">int</span> oldR = mRight;</div><div class="line">    <span class="comment">// 4-1 实际都是调用setFrame对mLeft、mRight、mTop、mBottom进行赋值</span></div><div class="line">    <span class="comment">// 返回的结果代表view的位置是否发生过变化，来判定是否需要重新进行layout</span></div><div class="line">    <span class="keyword">boolean</span> changed = isLayoutModeOptical(mParent) ?</div><div class="line">            setOpticalFrame(l, t, r, b) : setFrame(l, t, r, b);</div><div class="line"></div><div class="line">    <span class="comment">// 4-2 需要重新layout的情况</span></div><div class="line">    <span class="keyword">if</span> (changed || (mPrivateFlags &amp; PFLAG_LAYOUT_REQUIRED) == PFLAG_LAYOUT_REQUIRED) &#123;</div><div class="line">        <span class="comment">// 4-3 调用onLayout对子View进行布局</span></div><div class="line">        onLayout(changed, l, t, r, b);</div><div class="line"></div><div class="line">        <span class="comment">// ...</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// ...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在4-1处，可以知道 setOpticalFrame 也是通过setFrame()确定当前View上下左右顶点的位置，然后与之前的位置对比，看是否需要重新layout</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">setOpticalFrame</span><span class="params">(<span class="keyword">int</span> left, <span class="keyword">int</span> top, <span class="keyword">int</span> right, <span class="keyword">int</span> bottom)</span> </span>&#123;</div><div class="line">    Insets parentInsets = mParent <span class="keyword">instanceof</span> View ?</div><div class="line">            ((View) mParent).getOpticalInsets() : Insets.NONE;</div><div class="line">    Insets childInsets = getOpticalInsets();</div><div class="line">    <span class="keyword">return</span> setFrame(</div><div class="line">            left   + parentInsets.left - childInsets.left,</div><div class="line">            top    + parentInsets.top  - childInsets.top,</div><div class="line">            right  + parentInsets.left + childInsets.right,</div><div class="line">            bottom + parentInsets.top  + childInsets.bottom);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">setFrame</span><span class="params">(<span class="keyword">int</span> left, <span class="keyword">int</span> top, <span class="keyword">int</span> right, <span class="keyword">int</span> bottom)</span> </span>&#123;</div><div class="line">    <span class="keyword">boolean</span> changed = <span class="keyword">false</span>;</div><div class="line">    <span class="keyword">if</span> (mLeft != left || mRight != right || mTop != top || mBottom != bottom) &#123;</div><div class="line">        changed = <span class="keyword">true</span>;</div><div class="line">				<span class="comment">// ... 位置发送变化，重新设置顶点位置，确定当前View需要摆放的位置</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> changed;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在4-2处，判断当前View的位置发生了变化，当当前View的位置发生了变化，就会在4-3调用到onLayout方法中去，重新摆放子view。</p>
+<h4 id="4-2-调用onLayout方法，旨在确定子元素的位置"><a href="#4-2-调用onLayout方法，旨在确定子元素的位置" class="headerlink" title="4.2 调用onLayout方法，旨在确定子元素的位置"></a>4.2 调用onLayout方法，旨在确定子元素的位置</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// View中的 onLayout</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onLayout</span><span class="params">(<span class="keyword">boolean</span> changed, <span class="keyword">int</span> left, <span class="keyword">int</span> top, <span class="keyword">int</span> right, <span class="keyword">int</span> bottom)</span> </span>&#123;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// ViewGroup 中的 onLayout</span></div><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">onLayout</span><span class="params">(<span class="keyword">boolean</span> changed, <span class="keyword">int</span> l, <span class="keyword">int</span> t, <span class="keyword">int</span> r, <span class="keyword">int</span> b)</span></span>;</div></pre></td></tr></table></figure>
+<h4 id="4-3-onLayout方法由具体子类去实现，达到不同layout不同的功效"><a href="#4-3-onLayout方法由具体子类去实现，达到不同layout不同的功效" class="headerlink" title="4.3 onLayout方法由具体子类去实现，达到不同layout不同的功效"></a>4.3 onLayout方法由具体子类去实现，达到不同layout不同的功效</h4><p>可以看到View中的onLayout是个空方法，而ViewGroup中的onLayout方法是被abstract修饰的。在View和ViewGroup中，onLayout方法没做任何处理，而是交由子类去处理，而ViewGroup的实现类必须实现onLayout方法，决定子View摆放的规则。</p>
+<p>这里可以转到LinearLayout中去查看onLayout的具体实现，此文不做详细介绍了。</p>
+<h3 id="5-绘制过程-View-draw-gt-onDraw"><a href="#5-绘制过程-View-draw-gt-onDraw" class="headerlink" title="5.  绘制过程 View#draw -&gt; onDraw"></a>5.  绘制过程 View#draw -&gt; onDraw</h3><p>绘制过程的代码注释写的清楚明了，从注释来看，整个绘制过程被分为了6步，并且说明了第二步和第五步可以跳过，那我们对其余的四个步骤进行查看。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">draw</span><span class="params">(Canvas canvas)</span> </span>&#123;</div><div class="line">    <span class="comment">// ...</span></div><div class="line"></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * Draw traversal performs several drawing steps which must be executed</div><div class="line">     * in the appropriate order:</div><div class="line">     *</div><div class="line">     *      1. Draw the background</div><div class="line">     *      2. If necessary, save the canvas' layers to prepare for fading</div><div class="line">     *      3. Draw view's content</div><div class="line">     *      4. Draw children</div><div class="line">     *      5. If necessary, draw the fading edges and restore layers</div><div class="line">     *      6. Draw decorations (scrollbars for instance)</div><div class="line">     */</div><div class="line"></div><div class="line">    <span class="comment">// Step 1, draw the background, if needed</span></div><div class="line">  	<span class="comment">// 5-1 绘制背景</span></div><div class="line">    <span class="keyword">int</span> saveCount;</div><div class="line">    <span class="keyword">if</span> (!dirtyOpaque) &#123;</div><div class="line">        drawBackground(canvas);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// skip step 2 &amp; 5 if possible (common case)</span></div><div class="line">    <span class="comment">// ...</span></div><div class="line"></div><div class="line">    <span class="comment">// Step 2, save the canvas' layers</span></div><div class="line">    <span class="comment">// ...</span></div><div class="line">    saveCount = canvas.getSaveCount();</div><div class="line">    <span class="keyword">int</span> solidColor = getSolidColor();</div><div class="line">    <span class="keyword">if</span> (solidColor == <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">if</span> (drawTop) &#123;</div><div class="line">            canvas.saveUnclippedLayer(left, top, right, top + length);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (drawBottom) &#123;</div><div class="line">            canvas.saveUnclippedLayer(left, bottom - length, right, bottom);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (drawLeft) &#123;</div><div class="line">            canvas.saveUnclippedLayer(left, top, left + length, bottom);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (drawRight) &#123;</div><div class="line">            canvas.saveUnclippedLayer(right - length, top, right, bottom);</div><div class="line">        &#125;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        scrollabilityCache.setFadeColor(solidColor);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// Step 3, draw the content</span></div><div class="line">  	<span class="comment">// 5-2 绘制自己本身内容</span></div><div class="line">    <span class="keyword">if</span> (!dirtyOpaque) onDraw(canvas);</div><div class="line"></div><div class="line">    <span class="comment">// Step 4, draw the children</span></div><div class="line">  	<span class="comment">// 5-3 绘制子View</span></div><div class="line">    dispatchDraw(canvas);</div><div class="line"></div><div class="line">    <span class="comment">// Step 5, draw the fade effect and restore layers</span></div><div class="line">    <span class="keyword">final</span> Paint p = scrollabilityCache.paint;</div><div class="line">    <span class="keyword">final</span> Matrix matrix = scrollabilityCache.matrix;</div><div class="line">    <span class="keyword">final</span> Shader fade = scrollabilityCache.shader;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (drawTop) &#123;</div><div class="line">        matrix.setScale(<span class="number">1</span>, fadeHeight * topFadeStrength);</div><div class="line">        matrix.postTranslate(left, top);</div><div class="line">        fade.setLocalMatrix(matrix);</div><div class="line">        p.setShader(fade);</div><div class="line">        canvas.drawRect(left, top, right, top + length, p);</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// ... </span></div><div class="line"></div><div class="line">    <span class="comment">// Step 6, draw decorations (foreground, scrollbars)</span></div><div class="line">  	<span class="comment">// 5-4 绘制装饰</span></div><div class="line">    onDrawForeground(canvas);</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="5-1-绘制背景-background-draw-canvas"><a href="#5-1-绘制背景-background-draw-canvas" class="headerlink" title="5.1  绘制背景 background draw(canvas)"></a>5.1  绘制背景 background draw(canvas)</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">drawBackground</span><span class="params">(Canvas canvas)</span> </span>&#123;</div><div class="line">    <span class="comment">// 获取到设置的背景 （android:background、setBackgroundColor、setBackgroundResource）</span></div><div class="line">    <span class="keyword">final</span> Drawable background = mBackground;</div><div class="line">    <span class="keyword">if</span> (background == <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 设置绘制背景区域</span></div><div class="line">    setBackgroundBounds();</div><div class="line"></div><div class="line">    <span class="comment">// ...</span></div><div class="line"></div><div class="line">    <span class="comment">// 通过Drawable的draw()方法来完成绘制</span></div><div class="line">    <span class="keyword">final</span> <span class="keyword">int</span> scrollX = mScrollX;</div><div class="line">    <span class="keyword">final</span> <span class="keyword">int</span> scrollY = mScrollY;</div><div class="line">    <span class="keyword">if</span> ((scrollX | scrollY) == <span class="number">0</span>) &#123;</div><div class="line">        background.draw(canvas);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        canvas.translate(scrollX, scrollY);</div><div class="line">        background.draw(canvas);</div><div class="line">        canvas.translate(-scrollX, -scrollY);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="5-2-绘制自己-onDraw"><a href="#5-2-绘制自己-onDraw" class="headerlink" title="5.2 绘制自己 onDraw"></a>5.2 绘制自己 onDraw</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Implement this to do your drawing.</div><div class="line"> *</div><div class="line"> * <span class="doctag">@param</span> canvas the canvas on which the background will be drawn</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onDraw</span><span class="params">(Canvas canvas)</span> </span>&#123;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>onDraw是个空方法，ViewGroup也没有覆写该方法，这是因为每个View绘制自己的内容都各不相同，具体的绘制内容就交由具体子类去实现。</p>
+<h4 id="5-3-绘制children-dispatchDraw"><a href="#5-3-绘制children-dispatchDraw" class="headerlink" title="5.3 绘制children dispatchDraw"></a>5.3 绘制children dispatchDraw</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// View # dispatchDraw</span></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Called by draw to draw the child views. This may be overridden</div><div class="line"> * by derived classes to gain control just before its children are drawn</div><div class="line"> * (but after its own view has been drawn).</div><div class="line"> * <span class="doctag">@param</span> canvas the canvas on which to draw the view</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">dispatchDraw</span><span class="params">(Canvas canvas)</span> </span>&#123;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// ViewGroup # dispatchDraw</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">dispatchDraw</span><span class="params">(Canvas canvas)</span> </span>&#123;</div><div class="line">    <span class="keyword">boolean</span> usingRenderNodeProperties = canvas.isRecordingFor(mRenderNode);</div><div class="line">    <span class="keyword">final</span> <span class="keyword">int</span> childrenCount = mChildrenCount;</div><div class="line">    <span class="keyword">final</span> View[] children = mChildren;</div><div class="line">    <span class="comment">// ...</span></div><div class="line"></div><div class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; childrenCount; i++) &#123;</div><div class="line">        <span class="keyword">while</span> (transientIndex &gt;= <span class="number">0</span> &amp;&amp; mTransientIndices.get(transientIndex) == i) &#123;</div><div class="line">            <span class="keyword">final</span> View transientChild = mTransientViews.get(transientIndex);</div><div class="line">            <span class="keyword">if</span> ((transientChild.mViewFlags &amp; VISIBILITY_MASK) == VISIBLE ||</div><div class="line">                    transientChild.getAnimation() != <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="comment">// 分发到每个子View去绘制</span></div><div class="line">                more |= drawChild(canvas, transientChild, drawingTime);</div><div class="line">            &#125;</div><div class="line">            transientIndex++;</div><div class="line">            <span class="keyword">if</span> (transientIndex &gt;= transientCount) &#123;</div><div class="line">                transientIndex = -<span class="number">1</span>;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// ...</span></div><div class="line">    &#125;</div><div class="line">    <span class="comment">// ... </span></div><div class="line"></div><div class="line">    <span class="comment">// Draw any disappearing views that have animations</span></div><div class="line">    <span class="keyword">if</span> (mDisappearingChildren != <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">final</span> ArrayList&lt;View&gt; disappearingChildren = mDisappearingChildren;</div><div class="line">        <span class="keyword">final</span> <span class="keyword">int</span> disappearingCount = disappearingChildren.size() - <span class="number">1</span>;</div><div class="line">        <span class="comment">// Go backwards -- we may delete as animations finish</span></div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = disappearingCount; i &gt;= <span class="number">0</span>; i--) &#123;</div><div class="line">            <span class="keyword">final</span> View child = disappearingChildren.get(i);</div><div class="line">            <span class="comment">// 分发到每个子View去绘制</span></div><div class="line">            more |= drawChild(canvas, child, drawingTime);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// ...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到，dispatchDraw在View中是一个空方法，即没有子View了，就不需要往下分发draw事件了。而对应的在ViewGroup中，是会遍历所有子View，通过drawChild方法调用到子View的draw方法，完成子View的绘制。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">drawChild</span><span class="params">(Canvas canvas, View child, <span class="keyword">long</span> drawingTime)</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> child.draw(canvas, <span class="keyword">this</span>, drawingTime);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="5-4-绘制装饰-onDrawScrollBars"><a href="#5-4-绘制装饰-onDrawScrollBars" class="headerlink" title="5.4 绘制装饰 onDrawScrollBars"></a>5.4 绘制装饰 onDrawScrollBars</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDrawForeground</span><span class="params">(Canvas canvas)</span> </span>&#123;</div><div class="line">    onDrawScrollIndicators(canvas);</div><div class="line">    onDrawScrollBars(canvas);</div><div class="line"></div><div class="line">    <span class="keyword">final</span> Drawable foreground = mForegroundInfo != <span class="keyword">null</span> ? mForegroundInfo.mDrawable : <span class="keyword">null</span>;</div><div class="line">    <span class="keyword">if</span> (foreground != <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">if</span> (mForegroundInfo.mBoundsChanged) &#123;</div><div class="line">            mForegroundInfo.mBoundsChanged = <span class="keyword">false</span>;</div><div class="line">            <span class="keyword">final</span> Rect selfBounds = mForegroundInfo.mSelfBounds;</div><div class="line">            <span class="keyword">final</span> Rect overlayBounds = mForegroundInfo.mOverlayBounds;</div><div class="line"></div><div class="line">            <span class="keyword">if</span> (mForegroundInfo.mInsidePadding) &#123;</div><div class="line">                selfBounds.set(<span class="number">0</span>, <span class="number">0</span>, getWidth(), getHeight());</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                selfBounds.set(getPaddingLeft(), getPaddingTop(),</div><div class="line">                        getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            <span class="keyword">final</span> <span class="keyword">int</span> ld = getLayoutDirection();</div><div class="line">            Gravity.apply(mForegroundInfo.mGravity, foreground.getIntrinsicWidth(),</div><div class="line">                    foreground.getIntrinsicHeight(), selfBounds, overlayBounds, ld);</div><div class="line">            foreground.setBounds(overlayBounds);</div><div class="line">        &#125;</div><div class="line">        foreground.draw(canvas);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后一步，就是对View的一些装饰进行绘制，如滚动条之类的，这里就不继续深入分析了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>View的绘制过程主要包含measure、layout、draw三个具体步骤</li>
+<li>测量过程是MeasureSpec和LayoutParams配合工作，测量出子View和父View所需空间的大小</li>
+<li>View的layout就是用于确定自身摆放的位置，而ViewGroup要根据其作用和特性确定子View如何进行摆放</li>
+<li>View的draw是绘制自身的过程，ViewGroup会遍历子View，通知子View进行draw</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+            <a href="/tags/源码分析/" rel="tag"># 源码分析</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/19/事件分发源码分析/" rel="next" title="事件分发源码分析">
+                <i class="fa fa-chevron-left"></i> 事件分发源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="XuLiang" />
+          <p class="site-author-name" itemprop="name">XuLiang</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Activity启动后从哪里开始开启View的绘制"><span class="nav-number">1.</span> <span class="nav-text">1. Activity启动后从哪里开始开启View的绘制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-performTraversals流程"><span class="nav-number">2.</span> <span class="nav-text">2. performTraversals流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-测量过程-View-measure-gt-onMeasure"><span class="nav-number">3.</span> <span class="nav-text">3.  测量过程 View#measure -> onMeasure</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-MeasureSpec测量模式"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 MeasureSpec测量模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-MeasureSpec和LayoutParams的配合过程"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 MeasureSpec和LayoutParams的配合过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-View的具体测量过程"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 View的具体测量过程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-布局流程-View-layout-gt-onLayout"><span class="nav-number">4.</span> <span class="nav-text">4.  布局流程 View#layout -> onLayout</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1-通过setFrame来设定View四个顶点的位置"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 通过setFrame来设定View四个顶点的位置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-调用onLayout方法，旨在确定子元素的位置"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 调用onLayout方法，旨在确定子元素的位置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3-onLayout方法由具体子类去实现，达到不同layout不同的功效"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 onLayout方法由具体子类去实现，达到不同layout不同的功效</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-绘制过程-View-draw-gt-onDraw"><span class="nav-number">5.</span> <span class="nav-text">5.  绘制过程 View#draw -> onDraw</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#5-1-绘制背景-background-draw-canvas"><span class="nav-number">5.1.</span> <span class="nav-text">5.1  绘制背景 background draw(canvas)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-2-绘制自己-onDraw"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 绘制自己 onDraw</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-3-绘制children-dispatchDraw"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 绘制children dispatchDraw</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-4-绘制装饰-onDrawScrollBars"><span class="nav-number">5.4.</span> <span class="nav-text">5.4 绘制装饰 onDrawScrollBars</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">XuLiang</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+      <!-- UY BEGIN -->
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid="></script>
+      <!-- UY END -->
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
